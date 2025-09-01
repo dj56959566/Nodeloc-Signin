@@ -1,9 +1,8 @@
 const axios = require("axios");
-const { SocksProxyAgent } = require("socks-proxy-agent");
 
-const MAX_RETRY = 3;
-const RETRY_INTERVAL = 5000;
-const MAX_DELAY = 120 * 1000;
+const MAX_RETRY = 3;        // 最大重试次数
+const RETRY_INTERVAL = 5000; // 重试间隔(ms)
+const MAX_DELAY = 120 * 1000; // 启动前随机延迟(ms)
 
 function randomDelay(ms) {
   return Math.floor(Math.random() * ms);
@@ -13,7 +12,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Telegram 推送函数
+// Telegram 推送函数，只支持 HTTP/HTTPS 代理
 async function sendTG(title, message, TG_TOKEN, TG_USER_ID, TG_PROXY) {
   if (!TG_TOKEN || !TG_USER_ID) return;
   const tgUrl = `https://api.telegram.org/bot${TG_TOKEN}/sendMessage`;
@@ -22,12 +21,8 @@ async function sendTG(title, message, TG_TOKEN, TG_USER_ID, TG_PROXY) {
   try {
     const config = {};
     if (TG_PROXY) {
-      if (TG_PROXY.startsWith("socks")) {
-        config.httpsAgent = new SocksProxyAgent(TG_PROXY);
-      } else {
-        const [host, port] = TG_PROXY.split(":");
-        config.proxy = { host, port: parseInt(port) };
-      }
+      const [host, port] = TG_PROXY.split(":");
+      config.proxy = { host, port: parseInt(port) };
     }
     await axios.post(tgUrl, tgBody, config);
     console.log("✅ TG 推送成功");
@@ -61,7 +56,6 @@ async function checkin(account, retryCount = MAX_RETRY) {
     const data = res.data;
     console.log(`[${ALIAS}] 签到返回：`, data);
 
-    // 解析签到信息
     let title = `📢 NodeLoc 签到结果【${ALIAS}】\n———————————————————\n`;
     let msg = "";
 
