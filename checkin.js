@@ -18,7 +18,7 @@ async function sendTG(message) {
   }
 }
 
-// 获取最新 CSRF
+// 获取动态 CSRF
 async function fetchCSRF(COOKIE) {
   try {
     const res = await axios.get("https://www.nodeloc.com/latest", {
@@ -29,9 +29,7 @@ async function fetchCSRF(COOKIE) {
       }
     });
     const match = res.data.match(/name="csrf-token" content="([^"]+)"/);
-    if (match) return match[1];
-    console.log("❌ 未找到 CSRF token");
-    return null;
+    return match ? match[1] : null;
   } catch (err) {
     console.log("❌ 获取 CSRF 失败：", err.message);
     return null;
@@ -50,7 +48,12 @@ async function checkin(COOKIE, alias) {
   // 随机延迟 1~3 秒
   await new Promise(r => setTimeout(r, Math.random() * 2000 + 1000));
 
-  const CSRF = await fetchCSRF(COOKIE);
+  // 优先使用环境变量 CSRF
+  let CSRF = process.env.NODELOC_CSRF_1;
+  if (!CSRF) {
+    CSRF = await fetchCSRF(COOKIE);
+  }
+
   if (!CSRF) {
     const msg = `[${alias}] ❌ 获取 CSRF 失败`;
     console.log(msg);
@@ -71,7 +74,7 @@ async function checkin(COOKIE, alias) {
     });
 
     const data = res.data;
-    let msg = `[${alias}] 签到返回：\n${JSON.stringify(data)}`;
+    const msg = `[${alias}] 签到返回：\n${JSON.stringify(data)}`;
     console.log(msg);
     await sendTG(msg);
 
