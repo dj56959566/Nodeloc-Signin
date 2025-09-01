@@ -1,27 +1,30 @@
-name: Nodeloc 签到
+name: NodeLoc Checkin
 
 on:
   schedule:
-    - cron: "0 1 * * *"   # UTC 1点 = 北京时间 9点
-  workflow_dispatch:      # 手动触发
+    - cron: "5 0 * * *"   # 每天 UTC 0:05 运行（北京时间 08:05）
+  workflow_dispatch:       # 手动触发
 
 jobs:
-  sign_in:
+  checkin:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          python-version: "3.10"
+          node-version: "18"
 
-      - name: Install dependencies
-        run: pip install requests
+      - name: Install deps
+        run: npm install axios
 
-      - name: Run sign in script
+      - name: Run Checkin
         env:
-          NODELOC_COOKIE: ${{ secrets.NODELOC_COOKIE }}
-          NODELOC_CSRF: ${{ secrets.NODELOC_CSRF }}
-        run: python sign_in.py
+          NODELOC_COOKIE_1: ${{ secrets.NODELOC_COOKIE_1 }}
+          NODELOC_CSRF_1: ${{ secrets.NODELOC_CSRF_1 }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_USER_ID: ${{ secrets.TG_USER_ID }}
+          TG_PROXY: ${{ secrets.TG_PROXY }}   # 如果需要代理就填，格式 127.0.0.1:7890
+        run: node checkin.js
