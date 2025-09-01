@@ -1,0 +1,27 @@
+name: Nodeloc 签到
+
+on:
+  schedule:
+    - cron: "0 1 * * *"   # UTC 1点 = 北京时间 9点
+  workflow_dispatch:      # 手动触发
+
+jobs:
+  sign_in:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run sign in script
+        env:
+          NODELOC_COOKIE: ${{ secrets.NODELOC_COOKIE }}
+          NODELOC_CSRF: ${{ secrets.NODELOC_CSRF }}
+        run: python sign_in.py
