@@ -24,9 +24,9 @@ function getRandomUA() {
 }
 
 // 获取最新 CSRF
-async function fetchCSRF(cookie) {
+async function fetchCSRF(cookie, proxy) {
   try {
-    const res = await axios.get("https://www.nodeloc.com/latest", {
+    const config = {
       headers: {
         "user-agent": getRandomUA(),
         cookie,
@@ -35,9 +35,16 @@ async function fetchCSRF(cookie) {
         "accept-encoding": "gzip, deflate, br",
         connection: "keep-alive"
       }
-    });
-    const match = res.data.match(/name="csrf-token" content="([a-zA-Z0-9]+)"/);
+    };
+    if (proxy) {
+      const [host, port] = proxy.split(":");
+      config.proxy = { host, port: parseInt(port) };
+    }
+
+    const res = await axios.get("https://www.nodeloc.com/latest", config);
+    const match = res.data.match(/name="csrf-token" content="([^"]+)"/);
     if (match) return match[1];
+    console.log("❌ CSRF meta 标签未找到");
     return null;
   } catch (err) {
     console.log("❌ 获取 CSRF 失败：", err.message);
@@ -70,7 +77,7 @@ async function checkin(account, retryCount = MAX_RETRY) {
   console.log(`\n🧑 账号 [${ALIAS}] 开始签到，剩余重试次数：${retryCount}`);
 
   // 自动抓取最新 CSRF
-  const CSRF = await fetchCSRF(COOKIE);
+  const CSRF = await fetchCSRF(COOKIE, TG_PROXY);
   if (!CSRF) {
     console.log(`❌ [${ALIAS}] 获取 CSRF 失败，跳过签到`);
     return;
@@ -90,7 +97,13 @@ async function checkin(account, retryCount = MAX_RETRY) {
       "connection": "keep-alive"
     };
 
-    const res = await axios.post("https://www.nodeloc.com/checkin", {}, { headers });
+    const config = { headers };
+    if (TG_PROXY) {
+      const [host, port] = TG_PROXY.split(":");
+      config.proxy = { host, port: parseInt(port) };
+    }
+
+    const res = await axios.post("https://www.nodeloc.com/checkin", {}, config);
     const data = res.data;
     console.log(`[${ALIAS}] 签到返回：`, data);
 
