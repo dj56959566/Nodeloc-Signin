@@ -5,6 +5,8 @@
 在仓库 Settings → Secrets and variables → Actions 添加：
 
  NODELOC_COOKIE_1="完整登录Cookie"
+
+NODELOC_CSRF_1
  
  TG_BOT_TOKEN="你的TG机器人Token"
  
